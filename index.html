@@ -57,6 +57,7 @@ small.n{display:block;color:var(--mu);text-align:center;padding:16px;font-size:1
 .cpy{background:var(--bg);color:var(--ac);border:1px solid var(--bd);border-radius:10px;padding:8px 12px;font-size:13px;font-weight:bold}
 #cf{width:100%;padding:12px;border:1px dashed var(--ac);border-radius:12px;background:var(--bg);color:var(--tx);font-size:14px}
 .warn{background:var(--bg);border:1px solid var(--bd);border-radius:12px;padding:10px;font-size:13px;margin-top:10px}
+.q2{display:flex;align-items:center;gap:6px}.q2 button{background:var(--bg);color:var(--tx);border:1px solid var(--bd);border-radius:10px;width:36px;height:36px;font-size:18px}.q2 b{min-width:20px;text-align:center}
 </style></head><body>
 <header><h1 id="ttl"></h1><p>Elige tu plataforma, agrega al carrito y pide por WhatsApp.</p><button id="adm" style="display:none" onclick="openEd()">⚙️ Editar tienda</button><button id="out">Salir</button></header>
 <div id="tabs"><button id="t1" class="tb on" onclick="tab(1)">🛒 Comprar</button><button id="t2" class="tb" onclick="tab(2)">🛠 Reportar problema</button></div>
@@ -102,11 +103,14 @@ function bar(){var r=total(),b=document.getElementById("bar");b.style.display=r[
  document.getElementById("bn").textContent="🛒 Ver carrito ("+r[1]+")";document.getElementById("bt").textContent=money(r[0])}
 function openCart(){
  var h='<h2 style="margin:0 0 6px">Tu pedido</h2>';
- for(var k in cart)h+='<div class="r"><span>'+cart[k]+' × '+P[k].n+' — '+money(cart[k]*P[k].price)+'</span><button onclick="rm('+k+')">Quitar</button></div>';
+ for(var k in cart)h+='<div class="r"><span><b>'+P[k].n+'</b><br>'+money(cart[k]*P[k].price)+'</span><div class="q2"><button onclick="cq('+k+',-1)">−</button><b>'+cart[k]+'</b><button onclick="cq('+k+',1)">+</button><button class="dl" onclick="rm('+k+')">🗑</button></div></div>';
  h+='<div class="r"><b>Total</b><b>'+money(total()[0])+'</b></div><input id="nm" placeholder="Tu nombre" value="'+esc(window.CN||"")+'"><div id="cm" style="color:var(--no);font-size:13px"></div><button class="go" style="background:var(--ac)" onclick="goPay()">Continuar al pago</button><button class="x" onclick="closeCart()">Seguir viendo</button>';
  document.getElementById("box").innerHTML=h;document.getElementById("sheet").style.display="flex"}
 function closeCart(){document.getElementById("sheet").style.display="none"}
-function rm(k){delete cart[k];bar();if(total()[1])openCart();else closeCart()}
+function saveNm(){var e=document.getElementById("nm");if(e)window.CN=e.value}
+function cq(k,d){saveNm();var v=(cart[k]||0)+d;if(v<=0)delete cart[k];else cart[k]=Math.min(5,v);bar();if(total()[1])openCart();else closeCart()}
+function rm(k){saveNm();delete cart[k];bar();if(total()[1])openCart();else closeCart()}
+function doneMsg(){cart={};bar();document.getElementById("box").innerHTML='<h2 style="margin:0 0 8px">✅ Pedido enviado</h2><p style="font-size:14px;color:var(--mu)">Se abrió WhatsApp con tu pedido y tu comprobante. En cuanto confirmemos tu pago te entregamos tu cuenta.</p><button class="go" style="background:var(--ac)" onclick="closeCart();draw()">Volver a la tienda</button>'}
 function fmtCard(n){return String(n).replace(/\D/g,"").replace(/(\d{4})(?=\d)/g,"$1 ")}
 document.addEventListener("click",function(e){var b=e.target;if(!b.classList||!b.classList.contains("cpy"))return;
  var t=b.getAttribute("data-v"),ok=function(){b.textContent="¡Copiado!";setTimeout(function(){b.textContent="Copiar"},1500)};
@@ -130,13 +134,30 @@ function compress(file){return new Promise(function(res,rej){var im=new Image(),
   c.getContext("2d").drawImage(im,0,0,c.width,c.height);var q=.7,d=c.toDataURL("image/jpeg",q);
   while(d.length>800000&&q>.3){q-=.1;d=c.toDataURL("image/jpeg",q)}
   URL.revokeObjectURL(u);d.length>800000?rej():res(d)};im.onerror=rej;im.src=u})}
+var CLD={cloud:"",preset:""}; // Cloudinary: tu "Cloud name" y el nombre del "upload preset" (unsigned)
+function compressBlob(file){return new Promise(function(res,rej){var im=new Image(),u=URL.createObjectURL(file);
+ im.onload=function(){var k=Math.min(1,1400/Math.max(im.width,im.height)),c=document.createElement("canvas");c.width=Math.round(im.width*k);c.height=Math.round(im.height*k);
+  c.getContext("2d").drawImage(im,0,0,c.width,c.height);URL.revokeObjectURL(u);c.toBlob(function(b){b?res(b):rej({message:"imagen"})},"image/jpeg",.8)};
+ im.onerror=function(){rej({message:"imagen"})};im.src=u})}
+async function upCld(blob){var fd=new FormData();fd.append("file",blob,"comprobante.jpg");fd.append("upload_preset",CLD.preset);fd.append("folder","comprobantes");
+ var r=await fetch("https://api.cloudinary.com/v1_1/"+CLD.cloud+"/image/upload",{method:"POST",body:fd});
+ var j=await r.json();if(!r.ok||!j.secure_url)throw {message:(j.error&&j.error.message)||"error de subida"};return j.secure_url}
 async function sendOrder(){
  var f=document.getElementById("cf").files[0],pm=document.getElementById("pm");
  if(!f){pm.textContent="Primero deposita y agrega la captura de tu comprobante.";return}
  if(f.type.indexOf("image/")!==0){pm.textContent="El comprobante debe ser una imagen.";return}
- var m="Hola, hice mi pago y quiero mi pedido (a nombre de "+window.CN+"):\n";
+ var W=null;try{W=window.open("","_blank")}catch(e){}
+ function openWA(u){if(W&&!W.closed){W.location.href=u;doneMsg()}else{window.location.href=u}}
+ var m="Hola! Hice mi pago y quiero mi pedido.\n\n👤 Nombre: "+window.CN+"\n🛒 Pedido:\n";
  for(var k in cart)m+="• "+cart[k]+" x "+P[k].n+" ("+(P[k].dur||"1 Mes")+") – "+money(cart[k]*P[k].price)+"\n";
- m+="Total pagado: "+money(total()[0])+"\nAdjunto mi comprobante.";
+ m+="\n💰 Total pagado: "+money(total()[0]);
+ if(CLD.cloud&&CLD.preset){
+  try{
+   pm.style.color="var(--mu)";pm.textContent="Subiendo comprobante...";
+   var blob=await compressBlob(f);
+   var url=await Promise.race([upCld(blob),new Promise(function(_,rj){setTimeout(function(){rj({message:"tiempo agotado"})},15000)})]);
+   openWA("https://wa.me/"+D.whatsapp+"?text="+encodeURIComponent(m+"\n\n📎 Comprobante: "+url));return
+  }catch(e){pm.style.color="var(--no)";pm.textContent="No se pudo subir ("+(e&&(e.message||e.code)||"error")+"). Probando otra forma..."}}
  if(window.FB_ORDER){
   try{
    pm.style.color="var(--mu)";pm.textContent="Preparando comprobante...";
@@ -144,12 +165,12 @@ async function sendOrder(){
    pm.textContent="Subiendo comprobante...";
    var id=await Promise.race([window.FB_ORDER({nombre:String(window.CN).slice(0,70),total:money(total()[0]),items:it,img:img}),new Promise(function(_,rj){setTimeout(function(){rj({code:"tiempo agotado"})},12000)})]);
    var link=location.href.split("#")[0]+"#c="+id;
-   window.location.href="https://wa.me/"+D.whatsapp+"?text="+encodeURIComponent(m+"\nVer comprobante: "+link);return
+   openWA("https://wa.me/"+D.whatsapp+"?text="+encodeURIComponent(m+"\n\n📎 Comprobante: "+link));return
   }catch(e){pm.style.color="var(--no)";pm.textContent="No se pudo subir ("+(e&&(e.code||e.message)||"error")+"). Usando otra forma..."}}
  if(navigator.canShare&&navigator.canShare({files:[f]})){
-  try{await navigator.share({text:m,files:[f]});pm.style.color="var(--ok)";pm.textContent="Elige WhatsApp y mi chat para enviar tu pedido con el comprobante.";return}
-  catch(e){if(e&&e.name==="AbortError")return}}
- window.open("https://wa.me/"+D.whatsapp+"?text="+encodeURIComponent(m),"_blank");
+  try{await navigator.share({text:m,files:[f]});if(W)W.close();pm.style.color="var(--ok)";pm.textContent="Elige WhatsApp y mi chat para enviar tu pedido con el comprobante.";return}
+  catch(e){if(e&&e.name==="AbortError"){if(W)W.close();return}}}
+ openWA("https://wa.me/"+D.whatsapp+"?text="+encodeURIComponent(m));
  pm.style.color="var(--ok)";pm.textContent="Se abrió WhatsApp con tu pedido. Adjunta la captura de tu comprobante en el chat y envíalo."}
 document.getElementById("ttl").textContent=D.title;draw();
 function tab(n){document.getElementById("shop").className=n==1?"":"hid";document.getElementById("rep").className=n==2?"":"hid";document.getElementById("t1").className="tb"+(n==1?" on":"");document.getElementById("t2").className="tb"+(n==2?" on":"");document.getElementById("bar").style.display=(n==1&&total()[1])?"flex":"none"}
