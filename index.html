@@ -53,6 +53,10 @@ small.n{display:block;color:var(--mu);text-align:center;padding:16px;font-size:1
 #lg.hid{display:none}#lgb{background:var(--card);border-radius:18px;padding:20px;width:100%;max-width:360px}
 #lgb input{width:100%;padding:12px;margin:6px 0;border-radius:12px;border:1px solid var(--bd);background:var(--bg);color:var(--tx);font-size:15px}
 #out{display:none;margin-left:8px;background:none;border:0;color:var(--mu);font-size:13px}
+.pl{font-size:12px;color:var(--mu);margin:14px 0 2px}.pv{font-size:17px;font-weight:bold;display:flex;justify-content:space-between;align-items:center;gap:8px}
+.cpy{background:var(--bg);color:var(--ac);border:1px solid var(--bd);border-radius:10px;padding:8px 12px;font-size:13px;font-weight:bold}
+#cf{width:100%;padding:12px;border:1px dashed var(--ac);border-radius:12px;background:var(--bg);color:var(--tx);font-size:14px}
+.warn{background:var(--bg);border:1px solid var(--bd);border-radius:12px;padding:10px;font-size:13px;margin-top:10px}
 </style></head><body>
 <header><h1 id="ttl"></h1><p>Elige tu plataforma, agrega al carrito y pide por WhatsApp.</p><button id="adm" style="display:none" onclick="openEd()">⚙️ Editar tienda</button><button id="out">Salir</button></header>
 <div id="tabs"><button id="t1" class="tb on" onclick="tab(1)">🛒 Comprar</button><button id="t2" class="tb" onclick="tab(2)">🛠 Reportar problema</button></div>
@@ -69,7 +73,7 @@ small.n{display:block;color:var(--mu);text-align:center;padding:16px;font-size:1
 <button class="go" onclick="sendRep()">Enviar reporte por WhatsApp</button><div id="rm" class="n2"></div></div></div>
 <button id="bar" onclick="openCart()"><span id="bn">🛒 Ver carrito</span><span id="bt"></span></button>
 <div id="sheet" onclick="if(event.target===this)closeCart()"><div id="box"></div></div>
-<script type="application/json" id="data">{"title":"🎬 Tienda Streaming","whatsapp":"528611261265","platforms":[{"n":"Netflix","dur":"1 Mes","price":100,"stock":3,"c":"#e50914"},{"n":"Disney+","dur":"1 Mes","price":80,"stock":4,"c":"#113ccf"},{"n":"HBO Max","dur":"1 Mes","price":70,"stock":4,"c":"#5b2bd9"},{"n":"Amazon Prime","dur":"1 Mes","price":50,"stock":5,"c":"#1a98ff"},{"n":"Paramount+","dur":"1 Mes","price":50,"stock":1,"c":"#0064ff"},{"n":"VIX+","dur":"1 Mes","price":50,"stock":8,"c":"#f26a00"},{"n":"Crunchyroll","dur":"1 Mes","price":50,"stock":1,"c":"#f47521"},{"n":"Spotify por pedido","dur":"1 Mes","price":80,"stock":0,"c":"#1db954"}]}</script>
+<script type="application/json" id="data">{"title":"🎬 Tienda Streaming","whatsapp":"528611261265","pay":{"titular":"SERGIO DIAZ RODRIGUEZ","cards":[{"b":"BBVA Bancomer","n":"4152314111314210"},{"b":"Nu","n":"5101252636480883"}]},"platforms":[{"n":"Netflix","dur":"1 Mes","price":100,"stock":3,"c":"#e50914"},{"n":"Disney+","dur":"1 Mes","price":80,"stock":4,"c":"#113ccf"},{"n":"HBO Max","dur":"1 Mes","price":70,"stock":4,"c":"#5b2bd9"},{"n":"Amazon Prime","dur":"1 Mes","price":50,"stock":5,"c":"#1a98ff"},{"n":"Paramount+","dur":"1 Mes","price":50,"stock":1,"c":"#0064ff"},{"n":"VIX+","dur":"1 Mes","price":50,"stock":8,"c":"#f26a00"},{"n":"Crunchyroll","dur":"1 Mes","price":50,"stock":1,"c":"#f47521"},{"n":"Spotify por pedido","dur":"1 Mes","price":80,"stock":0,"c":"#1db954"}]}</script>
 <div id="lg" class="hid"><div id="lgb"><h3 style="margin:0 0 6px">Acceso administrador</h3>
 <input id="le" type="email" placeholder="Correo" autocomplete="username"><input id="lp" type="password" placeholder="Contraseña" autocomplete="current-password">
 <button class="go" id="lb">Entrar</button><div id="lm" style="color:var(--no);font-size:13px;margin-top:8px"></div><button class="x" id="lc">Cancelar</button></div></div>
@@ -98,16 +102,40 @@ function bar(){var r=total(),b=document.getElementById("bar");b.style.display=r[
 function openCart(){
  var h='<h2 style="margin:0 0 6px">Tu pedido</h2>';
  for(var k in cart)h+='<div class="r"><span>'+cart[k]+' × '+P[k].n+' — '+money(cart[k]*P[k].price)+'</span><button onclick="rm('+k+')">Quitar</button></div>';
- h+='<div class="r"><b>Total</b><b>'+money(total()[0])+'</b></div><input id="nm" placeholder="Tu nombre"><button class="go" onclick="send()">Pedir por WhatsApp</button><button class="x" onclick="closeCart()">Seguir viendo</button>';
+ h+='<div class="r"><b>Total</b><b>'+money(total()[0])+'</b></div><input id="nm" placeholder="Tu nombre" value="'+esc(window.CN||"")+'"><div id="cm" style="color:var(--no);font-size:13px"></div><button class="go" style="background:var(--ac)" onclick="goPay()">Continuar al pago</button><button class="x" onclick="closeCart()">Seguir viendo</button>';
  document.getElementById("box").innerHTML=h;document.getElementById("sheet").style.display="flex"}
 function closeCart(){document.getElementById("sheet").style.display="none"}
 function rm(k){delete cart[k];bar();if(total()[1])openCart();else closeCart()}
-function send(){
- var nm=(document.getElementById("nm").value||"").trim(),m="Hola, quiero hacer un pedido";
- if(nm)m+=" (a nombre de "+nm+")";m+=":\n";
- for(var k in cart)m+="• "+cart[k]+" x "+P[k].n+" (1 mes) – "+money(cart[k]*P[k].price)+"\n";
- m+="Total: "+money(total()[0]);
- window.open("https://wa.me/"+D.whatsapp+"?text="+encodeURIComponent(m),"_blank")}
+function fmtCard(n){return String(n).replace(/\D/g,"").replace(/(\d{4})(?=\d)/g,"$1 ")}
+document.addEventListener("click",function(e){var b=e.target;if(!b.classList||!b.classList.contains("cpy"))return;
+ var t=b.getAttribute("data-v"),ok=function(){b.textContent="¡Copiado!";setTimeout(function(){b.textContent="Copiar"},1500)};
+ if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(t).then(ok,function(){fb()});else fb();
+ function fb(){var x=document.createElement("textarea");x.value=t;document.body.appendChild(x);x.select();try{document.execCommand("copy")}catch(_){}x.remove();ok()}});
+function goPay(){
+ var nm=(document.getElementById("nm").value||"").trim();
+ if(!nm){document.getElementById("cm").textContent="Escribe tu nombre para continuar.";return}
+ window.CN=nm;var pay=D.pay||{titular:"",cards:[]};
+ var h='<h2 style="margin:0 0 6px">Pago por transferencia o depósito</h2><div class="r"><b>Total a pagar</b><b>'+money(total()[0])+'</b></div>'+
+ '<div class="pl">Nombre</div><div class="pv">'+esc(pay.titular)+'</div>';
+ (pay.cards||[]).forEach(function(c){if(!c.n)return;h+='<div class="pl">Tarjeta '+esc(c.b)+'</div><div class="pv"><span>'+fmtCard(c.n)+'</span><button class="cpy" data-v="'+esc(String(c.n).replace(/\D/g,""))+'">Copiar</button></div>'});
+ h+='<div class="pl">Concepto (tu nombre)</div><div class="pv"><span>'+esc(nm)+'</span><button class="cpy" data-v="'+esc(nm)+'">Copiar</button></div>'+
+ '<div class="pl">WhatsApp para enviar tu comprobante</div><div class="pv"><span>+'+esc(D.whatsapp)+'</span><button class="cpy" data-v="'+esc(D.whatsapp)+'">Copiar</button></div>'+
+ '<div class="warn">Primero haz tu depósito o transferencia. Después agrega la captura de tu comprobante para poder enviar el pedido.</div>'+
+ '<div class="pl">Comprobante de pago *</div><input id="cf" type="file" accept="image/*"><div id="pm" style="color:var(--no);font-size:13px;margin:8px 0"></div>'+
+ '<button class="go" onclick="sendOrder()">Enviar pedido y comprobante por WhatsApp</button><button class="x" onclick="openCart()">← Volver al pedido</button>';
+ document.getElementById("box").innerHTML=h}
+async function sendOrder(){
+ var f=document.getElementById("cf").files[0],pm=document.getElementById("pm");
+ if(!f){pm.textContent="Primero deposita y agrega la captura de tu comprobante.";return}
+ if(f.type.indexOf("image/")!==0){pm.textContent="El comprobante debe ser una imagen.";return}
+ var m="Hola, hice mi pago y quiero mi pedido (a nombre de "+window.CN+"):\n";
+ for(var k in cart)m+="• "+cart[k]+" x "+P[k].n+" ("+(P[k].dur||"1 Mes")+") – "+money(cart[k]*P[k].price)+"\n";
+ m+="Total pagado: "+money(total()[0])+"\nAdjunto mi comprobante.";
+ if(navigator.canShare&&navigator.canShare({files:[f]})){
+  try{await navigator.share({text:m,files:[f]});pm.style.color="var(--ok)";pm.textContent="Elige WhatsApp y mi chat para enviar tu pedido con el comprobante.";return}
+  catch(e){if(e&&e.name==="AbortError")return}}
+ window.open("https://wa.me/"+D.whatsapp+"?text="+encodeURIComponent(m),"_blank");
+ pm.style.color="var(--ok)";pm.textContent="Se abrió WhatsApp con tu pedido. Adjunta la captura de tu comprobante en el chat y envíalo."}
 document.getElementById("ttl").textContent=D.title;draw();
 function tab(n){document.getElementById("shop").className=n==1?"":"hid";document.getElementById("rep").className=n==2?"":"hid";document.getElementById("t1").className="tb"+(n==1?" on":"");document.getElementById("t2").className="tb"+(n==2?" on":"");document.getElementById("bar").style.display=(n==1&&total()[1])?"flex":"none"}
 document.getElementById("rp").innerHTML='<option value="">Elige...</option>'+P.map(function(p){return '<option>'+esc(p.n)+'</option>'}).join("");
@@ -123,12 +151,15 @@ async function sendRep(){
 function esc(v){return String(v).replace(/"/g,"&quot;").replace(/</g,"&lt;")}
 function edRows(){var h="";P.forEach(function(p,i){h+='<div class="er"><div class="g"><div><label>Plataforma</label><input class="en" value="'+esc(p.n)+'"></div><div><label>Duración</label><input class="ed" value="'+esc(p.dur||"1 Mes")+'"></div><div><label>Precio ($)</label><input class="ep" type="number" inputmode="decimal" value="'+p.price+'"></div><div><label>¿Disponible?</label><select class="es"><option value="1"'+(p.stock>0?' selected':'')+'>Sí</option><option value="0"'+(p.stock>0?'':' selected')+'>Agotado</option></select></div><div><label>Color</label><input class="ec" type="color" value="'+p.c+'"></div><div style="display:flex;align-items:flex-end"><button class="dl" onclick="delP('+i+')">🗑 Eliminar</button></div></div></div>'});return h}
 function readEd(){var L=document.querySelectorAll("#edb .er"),o=[];L.forEach(function(r){o.push({n:r.querySelector(".en").value.trim()||"Sin nombre",dur:r.querySelector(".ed").value.trim()||"1 Mes",price:parseFloat(r.querySelector(".ep").value)||0,stock:r.querySelector(".es").value==="1"?99:0,c:r.querySelector(".ec").value})});return o}
-function paintEd(){document.getElementById("edb").innerHTML='<h2 style="margin:0 0 4px">Editar tienda</h2><label>Nombre de la tienda</label><input id="et" value="'+esc(D.title)+'"><label>Tu WhatsApp (con 52, sin +)</label><input id="ew" inputmode="numeric" value="'+esc(D.whatsapp)+'">'+edRows()+'<button class="sec" onclick="addP()">➕ Agregar plataforma</button><button class="go" id="sv" onclick="saveEd()">Guardar cambios</button><button class="x" onclick="closeEd()">Cancelar</button><div id="em" style="color:var(--no);font-size:13px"></div>'}
+function paintEd(){document.getElementById("edb").innerHTML='<h2 style="margin:0 0 4px">Editar tienda</h2><label>Nombre de la tienda</label><input id="et" value="'+esc(D.title)+'"><label>Tu WhatsApp (con 52, sin +)</label><input id="ew" inputmode="numeric" value="'+esc(D.whatsapp)+'">'+payRows()+edRows()+'<button class="sec" onclick="addP()">➕ Agregar plataforma</button><button class="go" id="sv" onclick="saveEd()">Guardar cambios</button><button class="x" onclick="closeEd()">Cancelar</button><div id="em" style="color:var(--no);font-size:13px"></div>'}
 function openEd(){paintEd();document.getElementById("ed").style.display="flex"}
 function closeEd(){document.getElementById("ed").style.display="none"}
 function delP(i){P=readEd();P.splice(i,1);D.platforms=P;keepTop();paintEd()}
 function addP(){P=readEd();P.push({n:"Nueva",dur:"1 Mes",price:0,stock:0,c:"#6d4ee8"});D.platforms=P;keepTop();paintEd()}
-function keepTop(){D.title=document.getElementById("et").value;D.whatsapp=document.getElementById("ew").value}
+function payRows(){var p=D.pay||{titular:"",cards:[]},c=p.cards||[],h='<label>Datos de pago: nombre del titular</label><input id="pt" value="'+esc(p.titular||"")+'">';
+ for(var i=0;i<2;i++){var x=c[i]||{b:"",n:""};h+='<div class="g" style="display:grid;grid-template-columns:1fr 1.4fr;gap:8px"><div><label>Banco '+(i+1)+'</label><input class="pb" value="'+esc(x.b)+'"></div><div><label>Número de tarjeta</label><input class="pn" inputmode="numeric" value="'+esc(x.n)+'"></div></div>'}return h}
+function readPay(){var b=document.querySelectorAll("#edb .pb"),n=document.querySelectorAll("#edb .pn"),c=[];for(var i=0;i<b.length;i++)c.push({b:b[i].value.trim(),n:n[i].value.replace(/\D/g,"")});return{titular:document.getElementById("pt").value.trim(),cards:c}}
+function keepTop(){D.title=document.getElementById("et").value;D.whatsapp=document.getElementById("ew").value;D.pay=readPay()}
 function buildDoc(){
  var c=document.documentElement.cloneNode(true);
  c.querySelector("#grid").innerHTML="";c.querySelector("#rp").innerHTML="";c.querySelector("#shop").className="";c.querySelector("#rep").className="hid";c.querySelector("#t1").className="tb on";c.querySelector("#t2").className="tb";c.querySelector("#box").innerHTML="";c.querySelector("#edb").innerHTML="";
@@ -140,7 +171,7 @@ async function saveEd(){
  keepTop();D.platforms=readEd();D.whatsapp=D.whatsapp.replace(/\D/g,"");P=D.platforms;
  var m=document.getElementById("em");
  if(window.FB_SAVE){
-  try{document.getElementById("sv").textContent="Guardando...";await window.FB_SAVE({title:D.title,whatsapp:D.whatsapp,platforms:D.platforms});closeEd()}
+  try{document.getElementById("sv").textContent="Guardando...";await window.FB_SAVE({title:D.title,whatsapp:D.whatsapp,pay:D.pay,platforms:D.platforms});closeEd()}
   catch(e){m.textContent="No se pudo guardar: "+(e&&(e.code||e.message)||e);document.getElementById("sv").textContent="Guardar cambios"}
   return}
  var html=buildDoc(),art=null;
@@ -197,7 +228,7 @@ if(FB.apiKey&&FB.projectId){
   if(!sn.exists())return;
   var d=sn.data();if(!d.platforms||!d.platforms.length)return;
   window.D.title=d.title||window.D.title;window.D.whatsapp=d.whatsapp||window.D.whatsapp;
-  window.D.platforms=d.platforms;window.P=d.platforms;
+  if(d.pay)window.D.pay=d.pay;window.D.platforms=d.platforms;window.P=d.platforms;
   $("ttl").textContent=window.D.title;
   $("rp").innerHTML='<option value="">Elige...</option>'+window.P.map(function(p){return '<option>'+window.esc(p.n)+'</option>'}).join("");
   window.draw()},function(){});
