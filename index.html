@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="es"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Tienda Streaming</title>
+<style>
+:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
+--bg:#f5f3ff;--card:#fff;--tx:#1b1535;--mu:#6b6590;--ac:#6d4ee8;--ac2:#8b5cf6;--ok:#16a34a;--no:#dc2626;--bd:#e2ddf7}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0f0d1c;--card:#1a1730;--tx:#f0edff;--mu:#9a94c4;--bd:#2c2850;--ac:#7c5cf0}}
+:root[data-theme="dark"]{--bg:#0f0d1c;--card:#1a1730;--tx:#f0edff;--mu:#9a94c4;--bd:#2c2850;--ac:#7c5cf0}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--tx);font-family:Arial,Helvetica,sans-serif;padding-bottom:90px}
+header{padding:20px 16px 8px}h1{margin:0;font-size:22px}header p{margin:4px 0 0;color:var(--mu);font-size:14px}
+#q{width:calc(100% - 32px);margin:10px 16px;padding:12px 14px;border-radius:12px;border:1px solid var(--bd);background:var(--card);color:var(--tx);font-size:15px}
+#grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:0 16px}
+@media(min-width:700px){#grid{grid-template-columns:repeat(4,1fr)}}
+.c{background:var(--card);border:1px solid var(--bd);border-radius:16px;padding:14px;display:flex;flex-direction:column;gap:6px}
+.logo{height:70px;border-radius:12px;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:bold;font-size:17px;text-align:center}
+.c h3{margin:6px 0 0;font-size:16px}.dur{display:inline-block;background:var(--ac);color:#fff;border-radius:999px;font-size:12px;padding:3px 10px;width:max-content}
+.p{font-size:24px;font-weight:bold;color:var(--ac)}.s{font-size:13px}.ok{color:var(--ok)}.no{color:var(--no)}
+.q{display:flex;align-items:center;justify-content:space-between;border:1px solid var(--bd);border-radius:12px;padding:2px}
+.q button{background:none;border:0;color:var(--tx);font-size:20px;width:36px;height:34px}
+.add{background:linear-gradient(135deg,var(--ac),var(--ac2));color:#fff;border:0;border-radius:12px;padding:12px;font-size:15px;font-weight:bold}
+.add:disabled{opacity:.4}
+#bar{position:fixed;left:12px;right:12px;bottom:calc(12px + env(safe-area-inset-bottom,0px));background:var(--ac);color:#fff;border:0;border-radius:14px;padding:16px;font-size:16px;font-weight:bold;display:none;justify-content:space-between}
+#sheet{position:fixed;inset:0;background:rgba(0,0,0,.55);display:none;align-items:flex-end;z-index:5}
+#box{background:var(--card);width:100%;max-height:85%;overflow:auto;border-radius:20px 20px 0 0;padding:18px 16px calc(18px + env(safe-area-inset-bottom,0px))}
+.r{display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--bd);font-size:14px}
+.r button{background:none;border:0;color:var(--no);font-size:13px}
+#nm{width:100%;padding:12px;margin:12px 0;border-radius:12px;border:1px solid var(--bd);background:var(--bg);color:var(--tx);font-size:15px}
+.go{width:100%;background:#25d366;color:#fff;border:0;border-radius:12px;padding:14px;font-size:16px;font-weight:bold}
+.x{background:none;border:0;color:var(--mu);width:100%;padding:12px;font-size:14px}
+small.n{display:block;color:var(--mu);text-align:center;padding:16px;font-size:12px}
+#adm{margin-top:10px;background:var(--card);color:var(--tx);border:1px solid var(--bd);border-radius:10px;padding:8px 12px;font-size:13px}
+#ed{position:fixed;inset:0;background:rgba(0,0,0,.6);display:none;align-items:flex-end;z-index:9}
+#edb{background:var(--card);width:100%;max-height:92%;overflow:auto;border-radius:20px 20px 0 0;padding:16px 14px calc(18px + env(safe-area-inset-bottom,0px))}
+#edb label{display:block;font-size:12px;color:var(--mu);margin:8px 0 3px}
+#edb input{width:100%;padding:10px;border-radius:10px;border:1px solid var(--bd);background:var(--bg);color:var(--tx);font-size:15px}
+.er{border:1px solid var(--bd);border-radius:14px;padding:10px;margin:10px 0}
+.er .g{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.er input[type=color]{padding:2px;height:42px}
+.dl{background:none;border:0;color:var(--no);font-size:13px;padding:6px 0}
+.sec{background:var(--bg);color:var(--tx);border:1px dashed var(--ac);border-radius:12px;padding:12px;width:100%;margin:6px 0;font-size:14px}
+.tb{flex:1;background:var(--card);color:var(--tx);border:1px solid var(--bd);border-radius:12px;padding:12px;font-size:14px;font-weight:bold}
+.tb.on{background:var(--ac);color:#fff;border-color:var(--ac)}
+#tabs{display:flex;gap:8px;padding:6px 16px}
+.hid{display:none}
+#rf{padding:0 16px}#rf label{display:block;font-size:12px;color:var(--mu);margin:12px 0 4px}
+#rf input,#rf select,#rf textarea{width:100%;padding:12px;border-radius:12px;border:1px solid var(--bd);background:var(--card);color:var(--tx);font-size:15px;font-family:inherit}
+#rf .go{margin-top:18px}.n2{color:var(--mu);font-size:12px;margin-top:10px}
+</style></head><body>
+<header><h1 id="ttl"></h1><p>Elige tu plataforma, agrega al carrito y pide por WhatsApp.</p><button id="adm" style="display:none" onclick="openEd()">⚙️ Editar tienda</button></header>
+<div id="tabs"><button id="t1" class="tb on" onclick="tab(1)">🛒 Comprar</button><button id="t2" class="tb" onclick="tab(2)">🛠 Reportar problema</button></div>
+<div id="shop"><input id="q" placeholder="🔍 Buscar plataforma..." oninput="draw()">
+<div id="grid"></div>
+<small class="n">Entrega por WhatsApp una vez confirmado tu pago. Precio por perfil, 1 mes.</small>
+</div>
+<div id="rep" class="hid"><h2 style="margin:6px 16px">Reportar un problema</h2><div id="rf">
+<label>Tu nombre</label><input id="rn" placeholder="Nombre">
+<label>Plataforma</label><select id="rp"></select>
+<label>Perfil</label><input id="rpf" placeholder="Ej. P3 o nombre del perfil">
+<label>Descripción del problema</label><textarea id="rd" rows="4" placeholder="Cuéntanos qué pasa (no entra, pide código, clave incorrecta...)"></textarea>
+<label>Foto (opcional)</label><input id="rph" type="file" accept="image/*">
+<button class="go" onclick="sendRep()">Enviar reporte por WhatsApp</button><div id="rm" class="n2"></div></div></div>
+<button id="bar" onclick="openCart()"><span id="bn">🛒 Ver carrito</span><span id="bt"></span></button>
+<div id="sheet" onclick="if(event.target===this)closeCart()"><div id="box"></div></div>
+<script type="application/json" id="data">{"title":"🎬 Tienda Streaming","whatsapp":"528611261265","platforms":[{"n":"Netflix","dur":"1 Mes","price":100,"stock":3,"c":"#e50914"},{"n":"Disney+","dur":"1 Mes","price":80,"stock":4,"c":"#113ccf"},{"n":"HBO Max","dur":"1 Mes","price":70,"stock":4,"c":"#5b2bd9"},{"n":"Amazon Prime","dur":"1 Mes","price":50,"stock":5,"c":"#1a98ff"},{"n":"Paramount+","dur":"1 Mes","price":50,"stock":1,"c":"#0064ff"},{"n":"VIX+","dur":"1 Mes","price":50,"stock":8,"c":"#f26a00"},{"n":"Crunchyroll","dur":"1 Mes","price":50,"stock":1,"c":"#f47521"},{"n":"Spotify por pedido","dur":"1 Mes","price":80,"stock":0,"c":"#1db954"}]}</script>
+<div id="ed"><div id="edb"></div></div>
+<script>
+var D=JSON.parse(document.getElementById("data").textContent),P=D.platforms;
+var cart={},qty={};
+function money(x){return "$"+x.toFixed(2)}
+function draw(){
+ var t=document.getElementById("q").value.toLowerCase(),h="";
+ P.forEach(function(p,i){
+  if(p.n.toLowerCase().indexOf(t)<0)return;
+  var q=qty[i]||1,out=p.stock<=0;
+  h+='<div class="c"><div class="logo" style="background:'+p.c+'">'+p.n+'</div><h3>'+p.n+'</h3><span class="dur">'+(p.dur||"1 Mes")+'</span>'+
+  '<div class="p">'+money(p.price)+'</div><div class="s '+(out?'no':'ok')+'">● '+(out?'Agotado':p.stock+' disponibles')+'</div>'+
+  (out?'':'<div class="q"><button onclick="ch('+i+',-1)">−</button><b>'+q+'</b><button onclick="ch('+i+',1)">+</button></div>')+
+  '<button class="add" '+(out?'disabled':'')+' onclick="add('+i+')">🛒 Agregar</button></div>';
+ });
+ document.getElementById("grid").innerHTML=h||'<p style="grid-column:1/-1;color:var(--mu)">Sin resultados.</p>';
+}
+function ch(i,d){var v=(qty[i]||1)+d;qty[i]=Math.max(1,Math.min(P[i].stock,v));draw()}
+function add(i){cart[i]=Math.min(P[i].stock,(cart[i]||0)+(qty[i]||1));qty[i]=1;draw();bar()}
+function total(){var t=0,n=0;for(var k in cart){t+=cart[k]*P[k].price;n+=cart[k]}return [t,n]}
+function bar(){var r=total(),b=document.getElementById("bar");b.style.display=r[1]?"flex":"none";
+ document.getElementById("bn").textContent="🛒 Ver carrito ("+r[1]+")";document.getElementById("bt").textContent=money(r[0])}
+function openCart(){
+ var h='<h2 style="margin:0 0 6px">Tu pedido</h2>';
+ for(var k in cart)h+='<div class="r"><span>'+cart[k]+' × '+P[k].n+' — '+money(cart[k]*P[k].price)+'</span><button onclick="rm('+k+')">Quitar</button></div>';
+ h+='<div class="r"><b>Total</b><b>'+money(total()[0])+'</b></div><input id="nm" placeholder="Tu nombre"><button class="go" onclick="send()">Pedir por WhatsApp</button><button class="x" onclick="closeCart()">Seguir viendo</button>';
+ document.getElementById("box").innerHTML=h;document.getElementById("sheet").style.display="flex"}
+function closeCart(){document.getElementById("sheet").style.display="none"}
+function rm(k){delete cart[k];bar();if(total()[1])openCart();else closeCart()}
+function send(){
+ var nm=(document.getElementById("nm").value||"").trim(),m="Hola, quiero hacer un pedido";
+ if(nm)m+=" (a nombre de "+nm+")";m+=":\n";
+ for(var k in cart)m+="• "+cart[k]+" x "+P[k].n+" (1 mes) – "+money(cart[k]*P[k].price)+"\n";
+ m+="Total: "+money(total()[0]);
+ window.open("https://wa.me/"+D.whatsapp+"?text="+encodeURIComponent(m),"_blank")}
+document.getElementById("ttl").textContent=D.title;draw();
+function tab(n){document.getElementById("shop").className=n==1?"":"hid";document.getElementById("rep").className=n==2?"":"hid";document.getElementById("t1").className="tb"+(n==1?" on":"");document.getElementById("t2").className="tb"+(n==2?" on":"");document.getElementById("bar").style.display=(n==1&&total()[1])?"flex":"none"}
+document.getElementById("rp").innerHTML='<option value="">Elige...</option>'+P.map(function(p){return '<option>'+esc(p.n)+'</option>'}).join("");
+async function sendRep(){
+ var g=function(i){return document.getElementById(i).value.trim()},m=document.getElementById("rm");
+ if(!g("rp")||!g("rd")){m.textContent="Elige la plataforma y describe el problema.";return}
+ var t="⚠️ REPORTE\nCliente: "+(g("rn")||"-")+"\nPlataforma: "+g("rp")+"\nPerfil: "+(g("rpf")||"-")+"\nProblema: "+g("rd");
+ var f=document.getElementById("rph").files[0];
+ if(f&&navigator.canShare&&navigator.canShare({files:[f]})){
+  try{await navigator.share({text:t,files:[f]});m.textContent="Elige WhatsApp y mi chat para enviarlo con la foto.";return}catch(e){if(e&&e.name==="AbortError")return}}
+ window.open("https://wa.me/"+D.whatsapp+"?text="+encodeURIComponent(t),"_blank");
+ if(f)m.textContent="Se abrió WhatsApp con tu reporte. Adjunta la foto en el chat."}
+function esc(v){return String(v).replace(/"/g,"&quot;").replace(/</g,"&lt;")}
+function edRows(){var h="";P.forEach(function(p,i){h+='<div class="er"><div class="g"><div><label>Plataforma</label><input class="en" value="'+esc(p.n)+'"></div><div><label>Duración</label><input class="ed" value="'+esc(p.dur||"1 Mes")+'"></div><div><label>Precio ($)</label><input class="ep" type="number" inputmode="decimal" value="'+p.price+'"></div><div><label>Disponibles</label><input class="es" type="number" inputmode="numeric" value="'+p.stock+'"></div><div><label>Color</label><input class="ec" type="color" value="'+p.c+'"></div><div style="display:flex;align-items:flex-end"><button class="dl" onclick="delP('+i+')">🗑 Eliminar</button></div></div></div>'});return h}
+function readEd(){var L=document.querySelectorAll("#edb .er"),o=[];L.forEach(function(r){o.push({n:r.querySelector(".en").value.trim()||"Sin nombre",dur:r.querySelector(".ed").value.trim()||"1 Mes",price:parseFloat(r.querySelector(".ep").value)||0,stock:Math.max(0,parseInt(r.querySelector(".es").value)||0),c:r.querySelector(".ec").value})});return o}
+function paintEd(){document.getElementById("edb").innerHTML='<h2 style="margin:0 0 4px">Editar tienda</h2><label>Nombre de la tienda</label><input id="et" value="'+esc(D.title)+'"><label>Tu WhatsApp (con 52, sin +)</label><input id="ew" inputmode="numeric" value="'+esc(D.whatsapp)+'">'+edRows()+'<button class="sec" onclick="addP()">➕ Agregar plataforma</button><button class="go" id="sv" onclick="saveEd()">Guardar cambios</button><button class="x" onclick="closeEd()">Cancelar</button><div id="em" style="color:var(--no);font-size:13px"></div>'}
+function openEd(){paintEd();document.getElementById("ed").style.display="flex"}
+function closeEd(){document.getElementById("ed").style.display="none"}
+function delP(i){P=readEd();P.splice(i,1);D.platforms=P;keepTop();paintEd()}
+function addP(){P=readEd();P.push({n:"Nueva",dur:"1 Mes",price:0,stock:0,c:"#6d4ee8"});D.platforms=P;keepTop();paintEd()}
+function keepTop(){D.title=document.getElementById("et").value;D.whatsapp=document.getElementById("ew").value}
+function buildDoc(){
+ var c=document.documentElement.cloneNode(true);
+ c.querySelector("#grid").innerHTML="";c.querySelector("#rp").innerHTML="";c.querySelector("#shop").className="";c.querySelector("#rep").className="hid";c.querySelector("#t1").className="tb on";c.querySelector("#t2").className="tb";c.querySelector("#box").innerHTML="";c.querySelector("#edb").innerHTML="";
+ ["#sheet","#bar","#ed"].forEach(function(k){c.querySelector(k).removeAttribute("style")});
+ c.querySelector("#adm").setAttribute("style","display:none");
+ c.querySelector("#data").textContent=JSON.stringify(D).replace(/</g,"\\u003c");
+ return "<!DOCTYPE html>\n"+c.outerHTML}
+async function saveEd(){
+ keepTop();D.platforms=readEd();D.whatsapp=D.whatsapp.replace(/\D/g,"");P=D.platforms;
+ var m=document.getElementById("em"),html=buildDoc(),art=null;
+ try{if(typeof claude!=="undefined")art=await claude.use("artifact")}catch(e){}
+ if(art){
+  try{document.getElementById("sv").textContent="Guardando...";await art.publish(html)}
+  catch(e){m.textContent="No se pudo guardar: "+(e&&e.message||e.code||e);document.getElementById("sv").textContent="Guardar cambios"}
+  return}
+ document.getElementById("ttl").textContent=D.title;
+ document.getElementById("rp").innerHTML='<option value="">Elige...</option>'+P.map(function(p){return '<option>'+esc(p.n)+'</option>'}).join("");
+ draw();closeEd();
+ var bl=new Blob([html],{type:"text/html"}),a=document.createElement("a");
+ a.href=URL.createObjectURL(bl);a.download="index.html";document.body.appendChild(a);a.click();a.remove();
+ alert("Listo. Se descargó index.html con tus cambios. Súbelo a GitHub (Add file > Upload files) para que tus clientes lo vean.")}
+(async function(){try{if(location.hash==="#admin"){document.getElementById("adm").style.display="inline-block";return}}catch(e){}})();
+(async function(){try{var u=await claude.use("user");if(u&&(u.isOwner()||u.canEdit())&&await claude.use("artifact"))document.getElementById("adm").style.display="inline-block"}catch(e){}})();
+</script></body></html>
