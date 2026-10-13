@@ -77,6 +77,7 @@ small.n{display:block;color:var(--mu);text-align:center;padding:16px;font-size:1
 <div id="lg" class="hid"><div id="lgb"><h3 style="margin:0 0 6px">Acceso administrador</h3>
 <input id="le" type="email" placeholder="Correo" autocomplete="username"><input id="lp" type="password" placeholder="Contraseña" autocomplete="current-password">
 <button class="go" id="lb">Entrar</button><div id="lm" style="color:var(--no);font-size:13px;margin-top:8px"></div><button class="x" id="lc">Cancelar</button></div></div>
+<div id="rcv" class="hid" style="position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:30;overflow:auto;padding:16px"><div id="rcvb" style="background:var(--card);border-radius:16px;padding:16px;max-width:480px;margin:0 auto"></div></div>
 <div id="ed"><div id="edb"></div></div>
 <script>
 var D=JSON.parse(document.getElementById("data").textContent),P=D.platforms;
@@ -124,6 +125,11 @@ function goPay(){
  '<div class="pl">Comprobante de pago *</div><input id="cf" type="file" accept="image/*"><div id="pm" style="color:var(--no);font-size:13px;margin:8px 0"></div>'+
  '<button class="go" onclick="sendOrder()">Enviar pedido y comprobante por WhatsApp</button><button class="x" onclick="openCart()">← Volver al pedido</button>';
  document.getElementById("box").innerHTML=h}
+function compress(file){return new Promise(function(res,rej){var im=new Image(),u=URL.createObjectURL(file);
+ im.onload=function(){var k=Math.min(1,1000/Math.max(im.width,im.height)),c=document.createElement("canvas");c.width=Math.round(im.width*k);c.height=Math.round(im.height*k);
+  c.getContext("2d").drawImage(im,0,0,c.width,c.height);var q=.7,d=c.toDataURL("image/jpeg",q);
+  while(d.length>800000&&q>.3){q-=.1;d=c.toDataURL("image/jpeg",q)}
+  URL.revokeObjectURL(u);d.length>800000?rej():res(d)};im.onerror=rej;im.src=u})}
 async function sendOrder(){
  var f=document.getElementById("cf").files[0],pm=document.getElementById("pm");
  if(!f){pm.textContent="Primero deposita y agrega la captura de tu comprobante.";return}
@@ -131,6 +137,14 @@ async function sendOrder(){
  var m="Hola, hice mi pago y quiero mi pedido (a nombre de "+window.CN+"):\n";
  for(var k in cart)m+="• "+cart[k]+" x "+P[k].n+" ("+(P[k].dur||"1 Mes")+") – "+money(cart[k]*P[k].price)+"\n";
  m+="Total pagado: "+money(total()[0])+"\nAdjunto mi comprobante.";
+ if(window.FB_ORDER){
+  try{
+   pm.style.color="var(--mu)";pm.textContent="Subiendo comprobante...";
+   var img=await compress(f),it="";for(var k2 in cart)it+=cart[k2]+" x "+P[k2].n+"\n";
+   var id=await window.FB_ORDER({nombre:String(window.CN).slice(0,70),total:money(total()[0]),items:it,img:img});
+   var link=location.href.split("#")[0]+"#c="+id;
+   window.location.href="https://wa.me/"+D.whatsapp+"?text="+encodeURIComponent(m+"\nVer comprobante: "+link);return
+  }catch(e){pm.style.color="var(--no)";pm.textContent="No se pudo subir el comprobante, intentando otra forma..."}}
  if(navigator.canShare&&navigator.canShare({files:[f]})){
   try{await navigator.share({text:m,files:[f]});pm.style.color="var(--ok)";pm.textContent="Elige WhatsApp y mi chat para enviar tu pedido con el comprobante.";return}
   catch(e){if(e&&e.name==="AbortError")return}}
@@ -219,7 +233,7 @@ const FB={apiKey:"AIzaSyDLfprrwyup3qyB4oUnihDefr6MB0dDdLc",authDomain:"catalago-
 if(FB.apiKey&&FB.projectId){
  const V="10.12.2",B="https://www.gstatic.com/firebasejs/"+V+"/";
  const {initializeApp}=await import(B+"firebase-app.js");
- const {getFirestore,doc,onSnapshot,setDoc}=await import(B+"firebase-firestore.js");
+ const {getFirestore,doc,onSnapshot,setDoc,addDoc,getDoc,collection,serverTimestamp}=await import(B+"firebase-firestore.js");
  const {getAuth,signInWithEmailAndPassword,signOut,onAuthStateChanged}=await import(B+"firebase-auth.js");
  const app=initializeApp(FB),db=getFirestore(app),auth=getAuth(app),ref=doc(db,"tienda","config");
  const $=function(i){return document.getElementById(i)};
@@ -232,11 +246,21 @@ if(FB.apiKey&&FB.projectId){
   $("ttl").textContent=window.D.title;
   $("rp").innerHTML='<option value="">Elige...</option>'+window.P.map(function(p){return '<option>'+window.esc(p.n)+'</option>'}).join("");
   window.draw()},function(){});
- var admin=location.hash==="#admin";
+ var admin=location.hash==="#admin"||location.hash.indexOf("#c=")===0;
  function showLogin(v){$("lg").className=v?"":"hid"}
  onAuthStateChanged(auth,function(u){
-  if(u){window.FB_SAVE=function(data){return setDoc(ref,data)};$("adm").style.display="inline-block";$("out").style.display="inline-block";showLogin(false)}
+  if(u){window.FB_SAVE=function(data){return setDoc(ref,data)};$("adm").style.display="inline-block";$("out").style.display="inline-block";showLogin(false);if(location.hash.indexOf("#c=")===0)showReceipt(location.hash.slice(3))}
   else{window.FB_SAVE=null;$("adm").style.display="none";$("out").style.display="none";if(admin)showLogin(true)}});
+ window.FB_ORDER=async function(o){o.t=serverTimestamp();var r=await addDoc(collection(db,"pedidos"),o);return r.id};
+ async function showReceipt(id){
+  var b=$("rcvb");$("rcv").className="";b.innerHTML="Cargando comprobante...";
+  try{var sn=await getDoc(doc(db,"pedidos",id));
+   if(!sn.exists()){b.innerHTML="Este pedido no existe."}
+   else{var d=sn.data(),ok=String(d.img).indexOf("data:image/jpeg;base64,")===0;
+    b.innerHTML='<h3 style="margin:0 0 6px">Comprobante de pago</h3><div><b>'+window.esc(d.nombre)+'</b> — '+window.esc(d.total)+'</div><pre style="white-space:pre-wrap;font-family:inherit;font-size:14px">'+window.esc(d.items)+'</pre>'+(ok?'<img style="width:100%;border-radius:12px">':'')+'<button class="x" id="rcx">Cerrar</button>';
+    if(ok)b.querySelector("img").src=d.img;
+    $("rcx").onclick=function(){$("rcv").className="hid"}}}
+  catch(e){b.innerHTML="No se pudo abrir (revisa que hayas iniciado sesión con tu correo)."}}
  $("lb").onclick=async function(){
   $("lm").textContent="";
   try{await signInWithEmailAndPassword(auth,$("le").value.trim(),$("lp").value)}
