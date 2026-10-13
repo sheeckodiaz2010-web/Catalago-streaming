@@ -59,8 +59,9 @@ small.n{display:block;color:var(--mu);text-align:center;padding:16px;font-size:1
 .warn{background:var(--bg);border:1px solid var(--bd);border-radius:12px;padding:10px;font-size:13px;margin-top:10px}
 .q2{display:flex;align-items:center;gap:6px}.q2 button{background:var(--bg);color:var(--tx);border:1px solid var(--bd);border-radius:10px;width:36px;height:36px;font-size:18px}.q2 b{min-width:20px;text-align:center}
 .rvp body>*{display:none!important}.rvp #rcv,.rvp #rcv.hid{display:block!important}
+#rpb{margin-top:10px;margin-left:6px;background:var(--card);color:var(--tx);border:1px solid var(--bd);border-radius:10px;padding:8px 12px;font-size:13px}
 </style></head><body>
-<header><h1 id="ttl"></h1><p>Elige tu plataforma, agrega al carrito y pide por WhatsApp.</p><button id="adm" style="display:none" onclick="openEd()">⚙️ Editar tienda</button><button id="out">Salir</button></header>
+<header><h1 id="ttl"></h1><p>Elige tu plataforma, agrega al carrito y pide por WhatsApp.</p><button id="adm" style="display:none" onclick="openEd()">⚙️ Editar tienda</button><button id="rpb" style="display:none">📋 Reportes</button><button id="out">Salir</button></header>
 <div id="tabs"><button id="t1" class="tb on" onclick="tab(1)">🛒 Comprar</button><button id="t2" class="tb" onclick="tab(2)">🛠 Reportar problema</button></div>
 <div id="shop"><input id="q" placeholder="🔍 Buscar plataforma..." oninput="draw()">
 <div id="grid"></div>
@@ -70,6 +71,7 @@ small.n{display:block;color:var(--mu);text-align:center;padding:16px;font-size:1
 <label>Tu nombre</label><input id="rn" placeholder="Nombre">
 <label>Plataforma</label><select id="rp"></select>
 <label>Perfil</label><input id="rpf" placeholder="Ej. P3 o nombre del perfil">
+<label>Correo de la cuenta</label><input id="rc" type="email" placeholder="El correo de tu cuenta de streaming">
 <label>Descripción del problema</label><textarea id="rd" rows="4" placeholder="Cuéntanos qué pasa (no entra, pide código, clave incorrecta...)"></textarea>
 <label>Foto (opcional)</label><input id="rph" type="file" accept="image/*">
 <button class="go" onclick="sendRep()">Enviar reporte por WhatsApp</button><div id="rm" class="n2"></div></div></div>
@@ -80,9 +82,10 @@ small.n{display:block;color:var(--mu);text-align:center;padding:16px;font-size:1
 <input id="le" type="email" placeholder="Correo" autocomplete="username"><input id="lp" type="password" placeholder="Contraseña" autocomplete="current-password">
 <button class="go" id="lb">Entrar</button><div id="lm" style="color:var(--no);font-size:13px;margin-top:8px"></div><button class="x" id="lc">Cancelar</button></div></div>
 <div id="rcv" class="hid" style="position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:30;overflow:auto;padding:16px"><div id="rcvb" style="background:var(--card);border-radius:16px;padding:16px;max-width:480px;margin:0 auto"></div></div>
+<div id="rpt" class="hid" style="position:fixed;inset:0;background:var(--bg);z-index:25;overflow:auto;padding:14px"><div id="rptb" style="max-width:560px;margin:0 auto"></div></div>
 <div id="ed"><div id="edb"></div></div>
 <script>
-if(location.hash.indexOf("#c=")===0)document.documentElement.className="rvp";
+if(/^#[cf]=/.test(location.hash))document.documentElement.className="rvp";
 var D=JSON.parse(document.getElementById("data").textContent),P=D.platforms;
 var cart={},qty={};
 function money(x){return "$"+x.toFixed(2)}
@@ -177,15 +180,31 @@ async function sendOrder(){
 document.getElementById("ttl").textContent=D.title;draw();
 function tab(n){document.getElementById("shop").className=n==1?"":"hid";document.getElementById("rep").className=n==2?"":"hid";document.getElementById("t1").className="tb"+(n==1?" on":"");document.getElementById("t2").className="tb"+(n==2?" on":"");document.getElementById("bar").style.display=(n==1&&total()[1])?"flex":"none"}
 document.getElementById("rp").innerHTML='<option value="">Elige...</option>'+P.map(function(p){return '<option>'+esc(p.n)+'</option>'}).join("");
+function withTO(p,ms){return Promise.race([p,new Promise(function(_,rj){setTimeout(function(){rj({message:"tiempo agotado"})},ms)})])}
+function repDone(){["rn","rpf","rc","rd","rph"].forEach(function(i){document.getElementById(i).value=""});document.getElementById("rp").value="";
+ var m=document.getElementById("rm");m.style.color="var(--ok)";m.textContent="✅ Reporte enviado. Te respondemos por WhatsApp."}
 async function sendRep(){
  var g=function(i){return document.getElementById(i).value.trim()},m=document.getElementById("rm");
+ m.style.color="var(--no)";
  if(!g("rp")||!g("rd")){m.textContent="Elige la plataforma y describe el problema.";return}
- var t="⚠️ REPORTE\nCliente: "+(g("rn")||"-")+"\nPlataforma: "+g("rp")+"\nPerfil: "+(g("rpf")||"-")+"\nProblema: "+g("rd");
  var f=document.getElementById("rph").files[0];
+ if(f&&f.type.indexOf("image/")!==0){m.textContent="La foto debe ser una imagen.";return}
+ var W=null;try{W=window.open("","_blank")}catch(e){}
+ function go(u){if(W&&!W.closed){W.location.href=u;repDone()}else{window.location.href=u}}
+ var t="⚠️ REPORTE\n👤 Cliente: "+(g("rn")||"-")+"\n📺 Plataforma: "+g("rp")+"\n👥 Perfil: "+(g("rpf")||"-")+"\n📧 Correo: "+(g("rc")||"-")+"\n📝 Problema: "+g("rd");
+ m.style.color="var(--mu)";m.textContent="Enviando reporte...";
+ var link="",o={nombre:g("rn").slice(0,70),plataforma:g("rp").slice(0,60),perfil:g("rpf").slice(0,40),correo:g("rc").slice(0,120),problema:g("rd").slice(0,800),estado:"Pendiente"};
+ try{if(f&&CLD.cloud&&CLD.preset){link=await withTO(compressBlob(f).then(upCld),15000);o.foto=link}}catch(e){link=""}
+ if(window.FB_REPORT){
+  try{if(f&&!link)o.img=await compress(f);
+   var id=await withTO(window.FB_REPORT(o),12000);
+   if(o.img)link=location.href.split("#")[0]+"#f="+id}catch(e){}}
+ if(link){go("https://wa.me/"+D.whatsapp+"?text="+encodeURIComponent(t+"\n\n📎 Foto: "+link));return}
  if(f&&navigator.canShare&&navigator.canShare({files:[f]})){
-  try{await navigator.share({text:t,files:[f]});m.textContent="Elige WhatsApp y mi chat para enviarlo con la foto.";return}catch(e){if(e&&e.name==="AbortError")return}}
- window.open("https://wa.me/"+D.whatsapp+"?text="+encodeURIComponent(t),"_blank");
- if(f)m.textContent="Se abrió WhatsApp con tu reporte. Adjunta la foto en el chat."}
+  try{await navigator.share({text:t,files:[f]});if(W)W.close();repDone();return}
+  catch(e){if(e&&e.name==="AbortError"){if(W)W.close();m.textContent="";return}}}
+ go("https://wa.me/"+D.whatsapp+"?text="+encodeURIComponent(t));
+ if(f){m.style.color="var(--ok)";m.textContent="Se abrió WhatsApp. Adjunta tu foto en el chat y envíalo."}}
 function esc(v){return String(v).replace(/"/g,"&quot;").replace(/</g,"&lt;")}
 function edRows(){var h="";P.forEach(function(p,i){h+='<div class="er"><div class="g"><div><label>Plataforma</label><input class="en" value="'+esc(p.n)+'"></div><div><label>Duración</label><input class="ed" value="'+esc(p.dur||"1 Mes")+'"></div><div><label>Precio ($)</label><input class="ep" type="number" inputmode="decimal" value="'+p.price+'"></div><div><label>¿Disponible?</label><select class="es"><option value="1"'+(p.stock>0?' selected':'')+'>Sí</option><option value="0"'+(p.stock>0?'':' selected')+'>Agotado</option></select></div><div><label>Color</label><input class="ec" type="color" value="'+p.c+'"></div><div style="display:flex;align-items:flex-end"><button class="dl" onclick="delP('+i+')">🗑 Eliminar</button></div></div></div>'});return h}
 function readEd(){var L=document.querySelectorAll("#edb .er"),o=[];L.forEach(function(r){o.push({n:r.querySelector(".en").value.trim()||"Sin nombre",dur:r.querySelector(".ed").value.trim()||"1 Mes",price:parseFloat(r.querySelector(".ep").value)||0,stock:r.querySelector(".es").value==="1"?99:0,c:r.querySelector(".ec").value})});return o}
@@ -257,7 +276,7 @@ const FB={apiKey:"AIzaSyDLfprrwyup3qyB4oUnihDefr6MB0dDdLc",authDomain:"catalago-
 if(FB.apiKey&&FB.projectId){
  const V="10.12.2",B="https://www.gstatic.com/firebasejs/"+V+"/";
  const {initializeApp}=await import(B+"firebase-app.js");
- const {initializeFirestore,doc,onSnapshot,setDoc,addDoc,getDoc,collection,serverTimestamp}=await import(B+"firebase-firestore.js");
+ const {initializeFirestore,doc,onSnapshot,setDoc,addDoc,getDoc,getDocs,updateDoc,deleteDoc,query,orderBy,limit,collection,serverTimestamp}=await import(B+"firebase-firestore.js");
  const {getAuth,signInWithEmailAndPassword,signOut,onAuthStateChanged}=await import(B+"firebase-auth.js");
  const app=initializeApp(FB),db=initializeFirestore(app,{experimentalAutoDetectLongPolling:true}),auth=getAuth(app),ref=doc(db,"tienda","config");
  const $=function(i){return document.getElementById(i)};
@@ -273,20 +292,45 @@ if(FB.apiKey&&FB.projectId){
  var admin=location.hash==="#admin";
  function showLogin(v){$("lg").className=v?"":"hid"}
  onAuthStateChanged(auth,function(u){
-  if(u){window.FB_SAVE=function(data){return setDoc(ref,data)};$("adm").style.display="inline-block";$("out").style.display="inline-block";showLogin(false)}
-  else{window.FB_SAVE=null;$("adm").style.display="none";$("out").style.display="none";if(admin)showLogin(true)}});
+  if(u){window.FB_SAVE=function(data){return setDoc(ref,data)};$("adm").style.display="inline-block";$("out").style.display="inline-block";$("rpb").style.display="inline-block";count();showLogin(false)}
+  else{window.FB_SAVE=null;$("adm").style.display="none";$("out").style.display="none";$("rpb").style.display="none";$("rpt").className="hid";if(admin)showLogin(true)}});
  window.FB_ORDER=async function(o){o.t=serverTimestamp();var r=await addDoc(collection(db,"pedidos"),o);return r.id};
- async function showReceipt(id){
+ async function showReceipt(id,col){
   var b=$("rcvb");$("rcv").className="";$("rcv").style.background="#000";b.style.background="transparent";b.style.color="#fff";b.style.padding="0";b.innerHTML='<p style="text-align:center;font-family:Arial">Cargando comprobante...</p>';
-  try{var sn=await getDoc(doc(db,"pedidos",id));
+  try{var sn=await getDoc(doc(db,col||"pedidos",id));
    if(!sn.exists()){b.innerHTML='<p style="text-align:center;font-family:Arial">Este comprobante no existe.</p>';return}
    var d=sn.data();
    if(String(d.img).indexOf("data:image/jpeg;base64,")!==0){b.innerHTML="";return}
    b.innerHTML='<img style="width:100%;display:block;margin:0 auto;border-radius:8px"><p style="text-align:center;font-family:Arial;font-size:13px;color:#aaa;margin:10px 0"></p>';
    b.querySelector("img").src=d.img;
-   b.querySelector("p").textContent=d.nombre+" · "+d.total}
+   b.querySelector("p").textContent=(d.nombre||"")+" · "+(d.total||d.plataforma||"")}
   catch(e){b.innerHTML='<p style="text-align:center;font-family:Arial">No se pudo abrir el comprobante.</p>'}}
- if(location.hash.indexOf("#c=")===0)showReceipt(location.hash.slice(3));
+ if(location.hash.indexOf("#c=")===0)showReceipt(location.hash.slice(3),"pedidos");else if(location.hash.indexOf("#f=")===0)showReceipt(location.hash.slice(3),"reportes");
+ window.FB_REPORT=async function(o){o.t=serverTimestamp();var r=await addDoc(collection(db,"reportes"),o);return r.id};
+ function el(tag,txt,st){var e=document.createElement(tag);if(txt!=null)e.textContent=txt;if(st)e.style.cssText=st;return e}
+ async function openReports(){
+  var p=$("rpt"),b=$("rptb");p.className="";b.innerHTML="";
+  var top=el("div",null,"display:flex;justify-content:space-between;align-items:center;margin-bottom:10px");top.appendChild(el("h2","📋 Reportes","margin:0"));
+  var cl=el("button","Cerrar","background:var(--card);color:var(--tx);border:1px solid var(--bd);border-radius:10px;padding:8px 14px");cl.onclick=function(){p.className="hid"};top.appendChild(cl);b.appendChild(top);
+  var st=el("div","Cargando...","color:var(--mu)");b.appendChild(st);
+  try{
+   var sn=await getDocs(query(collection(db,"reportes"),orderBy("t","desc"),limit(100)));
+   st.textContent=sn.empty?"No hay reportes todavía.":"";
+   sn.forEach(function(x){var d=x.data(),c=el("div",null,"background:var(--card);border:1px solid var(--bd);border-radius:14px;padding:12px;margin:10px 0;font-size:14px");
+    c.appendChild(el("div",d.t&&d.t.toDate?d.t.toDate().toLocaleString("es-MX"):"","color:var(--mu);font-size:12px"));
+    c.appendChild(el("div",(d.nombre||"Sin nombre")+" — "+(d.plataforma||"")+(d.perfil?" · "+d.perfil:""),"font-weight:bold;margin:4px 0"));
+    if(d.correo)c.appendChild(el("div","📧 "+d.correo));
+    c.appendChild(el("div",d.problema||"","margin:6px 0;white-space:pre-wrap"));
+    var src=d.foto||(String(d.img||"").indexOf("data:image/jpeg;base64,")===0?d.img:"");
+    if(src){var im=el("img",null,"width:100%;max-height:260px;object-fit:contain;border-radius:10px;background:#000");im.src=src;c.appendChild(im)}
+    var row=el("div",null,"display:flex;gap:8px;margin-top:8px"),sel=el("select",null,"flex:1;padding:8px;border-radius:10px;border:1px solid var(--bd);background:var(--bg);color:var(--tx)");
+    ["Pendiente","En proceso","Resuelto"].forEach(function(o){var op=el("option",o);op.value=o;if(d.estado===o)op.selected=true;sel.appendChild(op)});
+    sel.onchange=function(){updateDoc(doc(db,"reportes",x.id),{estado:sel.value}).then(count)};
+    var dl=el("button","🗑 Borrar","background:none;border:0;color:var(--no)");dl.onclick=function(){if(confirm("¿Borrar este reporte?"))deleteDoc(doc(db,"reportes",x.id)).then(function(){c.remove();count()})};
+    row.appendChild(sel);row.appendChild(dl);c.appendChild(row);b.appendChild(c)});
+  }catch(e){st.textContent="No se pudieron cargar los reportes (inicia sesión con tu correo)."}}
+ async function count(){try{var sn=await getDocs(query(collection(db,"reportes"),orderBy("t","desc"),limit(100))),n=0;sn.forEach(function(x){if(x.data().estado!=="Resuelto")n++});$("rpb").textContent="📋 Reportes"+(n?" ("+n+")":"")}catch(e){}}
+ $("rpb").onclick=openReports;
  $("lb").onclick=async function(){
   $("lm").textContent="";
   try{await signInWithEmailAndPassword(auth,$("le").value.trim(),$("lp").value)}
