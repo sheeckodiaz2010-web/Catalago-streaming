@@ -60,6 +60,13 @@ small.n{display:block;color:var(--mu);text-align:center;padding:16px;font-size:1
 .q2{display:flex;align-items:center;gap:6px}.q2 button{background:var(--bg);color:var(--tx);border:1px solid var(--bd);border-radius:10px;width:36px;height:36px;font-size:18px}.q2 b{min-width:20px;text-align:center}
 .rvp body>*{display:none!important}.rvp #rcv,.rvp #rcv.hid{display:block!important}
 #rpb{margin-top:10px;margin-left:6px;background:var(--card);color:var(--tx);border:1px solid var(--bd);border-radius:10px;padding:8px 12px;font-size:13px}
+.c{position:relative}
+.ofr{position:absolute;top:8px;left:8px;z-index:2;background:linear-gradient(135deg,#ff3b30,#ff9500);color:#fff;font-size:11px;font-weight:bold;padding:4px 9px;border-radius:999px;box-shadow:0 2px 8px rgba(255,59,48,.5);animation:pl 1.1s infinite alternate}
+@keyframes pl{from{transform:scale(1)}to{transform:scale(1.09)}}
+.c.ofer{border-color:#ff9500;box-shadow:0 0 0 1px #ff9500}
+.old{color:var(--mu);font-size:15px;font-weight:normal;margin-right:6px;text-decoration:line-through}
+.chips{display:flex;gap:6px;flex-wrap:wrap}.chip{background:var(--bg);color:var(--tx);border:1px solid var(--bd);border-radius:999px;padding:5px 10px;font-size:12px}
+.chip.on{background:var(--ac);color:#fff;border-color:var(--ac)}.sv{font-size:12px;color:var(--ok);font-weight:bold}
 </style></head><body>
 <header><h1 id="ttl"></h1><p>Elige tu plataforma, agrega al carrito y pide por WhatsApp.</p><button id="adm" style="display:none" onclick="openEd()">⚙️ Editar tienda</button><button id="rpb" style="display:none">📋 Reportes</button><button id="out">Salir</button></header>
 <div id="tabs"><button id="t1" class="tb on" onclick="tab(1)">🛒 Comprar</button><button id="t2" class="tb" onclick="tab(2)">🛠 Reportar problema</button></div>
@@ -89,32 +96,42 @@ if(/^#[cf]=/.test(location.hash))document.documentElement.className="rvp";
 var D=JSON.parse(document.getElementById("data").textContent),P=D.platforms;
 var cart={},qty={};
 function money(x){return "$"+x.toFixed(2)}
+function pr(p,m){return m==1?p.price:(p["p"+m]||0)}
+function mlabel(p,m){return m==1?(p.dur||"1 Mes"):m+" meses"}
+function plansOf(p){var a=[1];[2,3,6].forEach(function(m){if(p["p"+m]>0)a.push(m)});return a}
+var sel={};
+function cl(){var o=[];for(var k in cart){var a=k.split("_"),p=P[a[0]];if(p)o.push({k:k,i:+a[0],m:+a[1],p:p,q:cart[k],pr:pr(p,+a[1])})}return o}
+function setM(i,m){sel[i]=m;draw()}
 function draw(){
  var t=document.getElementById("q").value.toLowerCase(),h="";
  P.forEach(function(p,i){
   if(p.n.toLowerCase().indexOf(t)<0)return;
-  var q=qty[i]||1,out=p.stock<=0;
-  h+='<div class="c"><div class="logo" style="background:'+p.c+'">'+p.n+'</div><h3>'+p.n+'</h3><span class="dur">'+(p.dur||"1 Mes")+'</span>'+
-  '<div class="p">'+money(p.price)+'</div><div class="s '+(out?'no':'ok')+'">● '+(out?'Agotado':'Disponible')+'</div>'+
+  var q=qty[i]||1,out=p.stock<=0,pl=plansOf(p),m=sel[i]||1;if(pl.indexOf(m)<0)m=1;
+  var price=pr(p,m),off=p.old>p.price&&p.price>0,pct=off?Math.round((1-p.price/p.old)*100):0,sv=m>1?(m*p.price-price):0;
+  h+='<div class="c'+(off?' ofer':'')+'">'+(off?'<div class="ofr">🔥 OFERTA -'+pct+'%</div>':'')+
+  '<div class="logo" style="background:'+p.c+'">'+p.n+'</div><h3>'+p.n+'</h3>'+
+  (pl.length>1?'<div class="chips">'+pl.map(function(x){return '<button class="chip'+(x==m?' on':'')+'" onclick="setM('+i+','+x+')">'+mlabel(p,x)+'</button>'}).join("")+'</div>':'<span class="dur">'+mlabel(p,1)+'</span>')+
+  '<div class="p">'+(off&&m==1?'<span class="old">'+money(p.old)+'</span>':'')+money(price)+'</div>'+(sv>0?'<div class="sv">Ahorras '+money(sv)+'</div>':'')+
+  '<div class="s '+(out?'no':'ok')+'">● '+(out?'Agotado':'Disponible')+'</div>'+
   (out?'':'<div class="q"><button onclick="ch('+i+',-1)">−</button><b>'+q+'</b><button onclick="ch('+i+',1)">+</button></div>')+
   '<button class="add" '+(out?'disabled':'')+' onclick="add('+i+')">🛒 Agregar</button></div>';
  });
  document.getElementById("grid").innerHTML=h||'<p style="grid-column:1/-1;color:var(--mu)">Sin resultados.</p>';
 }
 function ch(i,d){var v=(qty[i]||1)+d;qty[i]=Math.max(1,Math.min(5,v));draw()}
-function add(i){cart[i]=Math.min(5,(cart[i]||0)+(qty[i]||1));qty[i]=1;draw();bar()}
-function total(){var t=0,n=0;for(var k in cart){t+=cart[k]*P[k].price;n+=cart[k]}return [t,n]}
+function add(i){var m=sel[i]||1;if(plansOf(P[i]).indexOf(m)<0)m=1;var k=i+"_"+m;cart[k]=Math.min(5,(cart[k]||0)+(qty[i]||1));qty[i]=1;draw();bar()}
+function total(){var t=0,n=0;cl().forEach(function(x){t+=x.q*x.pr;n+=x.q});return [t,n]}
 function bar(){var r=total(),b=document.getElementById("bar");b.style.display=r[1]?"flex":"none";
  document.getElementById("bn").textContent="🛒 Ver carrito ("+r[1]+")";document.getElementById("bt").textContent=money(r[0])}
 function openCart(){
  var h='<h2 style="margin:0 0 6px">Tu pedido</h2>';
- for(var k in cart)h+='<div class="r"><span><b>'+P[k].n+'</b><br>'+money(cart[k]*P[k].price)+'</span><div class="q2"><button onclick="cq('+k+',-1)">−</button><b>'+cart[k]+'</b><button onclick="cq('+k+',1)">+</button><button class="dl" onclick="rm('+k+')">🗑</button></div></div>';
+ cl().forEach(function(x){h+='<div class="r"><span><b>'+x.p.n+'</b> · '+mlabel(x.p,x.m)+'<br>'+money(x.q*x.pr)+'</span><div class="q2"><button onclick="cq('+x.i+','+x.m+',-1)">−</button><b>'+x.q+'</b><button onclick="cq('+x.i+','+x.m+',1)">+</button><button class="dl" onclick="rm('+x.i+','+x.m+')">🗑</button></div></div>'});
  h+='<div class="r"><b>Total</b><b>'+money(total()[0])+'</b></div><input id="nm" placeholder="Tu nombre" value="'+esc(window.CN||"")+'"><div id="cm" style="color:var(--no);font-size:13px"></div><button class="go" style="background:var(--ac)" onclick="goPay()">Continuar al pago</button><button class="x" onclick="closeCart()">Seguir viendo</button>';
  document.getElementById("box").innerHTML=h;document.getElementById("sheet").style.display="flex"}
 function closeCart(){document.getElementById("sheet").style.display="none"}
 function saveNm(){var e=document.getElementById("nm");if(e)window.CN=e.value}
-function cq(k,d){saveNm();var v=(cart[k]||0)+d;if(v<=0)delete cart[k];else cart[k]=Math.min(5,v);bar();if(total()[1])openCart();else closeCart()}
-function rm(k){saveNm();delete cart[k];bar();if(total()[1])openCart();else closeCart()}
+function cq(i,m,d){saveNm();var k=i+"_"+m,v=(cart[k]||0)+d;if(v<=0)delete cart[k];else cart[k]=Math.min(5,v);bar();if(total()[1])openCart();else closeCart()}
+function rm(i,m){saveNm();delete cart[i+"_"+m];bar();if(total()[1])openCart();else closeCart()}
 function doneMsg(){cart={};bar();document.getElementById("box").innerHTML='<h2 style="margin:0 0 8px">✅ Pedido enviado</h2><p style="font-size:14px;color:var(--mu)">Se abrió WhatsApp con tu pedido y tu comprobante. En cuanto confirmemos tu pago te entregamos tu cuenta.</p><button class="go" style="background:var(--ac)" onclick="closeCart();draw()">Volver a la tienda</button>'}
 function fmtCard(n){return String(n).replace(/\D/g,"").replace(/(\d{4})(?=\d)/g,"$1 ")}
 document.addEventListener("click",function(e){var b=e.target;if(!b.classList||!b.classList.contains("cpy"))return;
@@ -154,7 +171,7 @@ async function sendOrder(){
  var W=null;try{W=window.open("","_blank")}catch(e){}
  function openWA(u){if(W&&!W.closed){W.location.href=u;doneMsg()}else{window.location.href=u}}
  var m="Hola! Hice mi pago y quiero mi pedido.\n\n👤 Nombre: "+window.CN+"\n🛒 Pedido:\n";
- for(var k in cart)m+="• "+cart[k]+" x "+P[k].n+" ("+(P[k].dur||"1 Mes")+") – "+money(cart[k]*P[k].price)+"\n";
+ cl().forEach(function(x){m+="• "+x.q+" x "+x.p.n+" ("+mlabel(x.p,x.m)+") – "+money(x.q*x.pr)+"\n"});
  m+="\n💰 Total pagado: "+money(total()[0]);
  if(CLD.cloud&&CLD.preset){
   try{
@@ -166,7 +183,7 @@ async function sendOrder(){
  if(window.FB_ORDER){
   try{
    pm.style.color="var(--mu)";pm.textContent="Preparando comprobante...";
-   var img=await compress(f),it="";for(var k2 in cart)it+=cart[k2]+" x "+P[k2].n+"\n";
+   var img=await compress(f),it="";cl().forEach(function(x){it+=x.q+" x "+x.p.n+" ("+mlabel(x.p,x.m)+")\n"});
    pm.textContent="Subiendo comprobante...";
    var id=await Promise.race([window.FB_ORDER({nombre:String(window.CN).slice(0,70),total:money(total()[0]),items:it,img:img}),new Promise(function(_,rj){setTimeout(function(){rj({code:"tiempo agotado"})},12000)})]);
    var link=location.href.split("#")[0]+"#c="+id;
@@ -206,8 +223,8 @@ async function sendRep(){
  go("https://wa.me/"+D.whatsapp+"?text="+encodeURIComponent(t));
  if(f){m.style.color="var(--ok)";m.textContent="Se abrió WhatsApp. Adjunta tu foto en el chat y envíalo."}}
 function esc(v){return String(v).replace(/"/g,"&quot;").replace(/</g,"&lt;")}
-function edRows(){var h="";P.forEach(function(p,i){h+='<div class="er"><div class="g"><div><label>Plataforma</label><input class="en" value="'+esc(p.n)+'"></div><div><label>Duración</label><input class="ed" value="'+esc(p.dur||"1 Mes")+'"></div><div><label>Precio ($)</label><input class="ep" type="number" inputmode="decimal" value="'+p.price+'"></div><div><label>¿Disponible?</label><select class="es"><option value="1"'+(p.stock>0?' selected':'')+'>Sí</option><option value="0"'+(p.stock>0?'':' selected')+'>Agotado</option></select></div><div><label>Color</label><input class="ec" type="color" value="'+p.c+'"></div><div style="display:flex;align-items:flex-end"><button class="dl" onclick="delP('+i+')">🗑 Eliminar</button></div></div></div>'});return h}
-function readEd(){var L=document.querySelectorAll("#edb .er"),o=[];L.forEach(function(r){o.push({n:r.querySelector(".en").value.trim()||"Sin nombre",dur:r.querySelector(".ed").value.trim()||"1 Mes",price:parseFloat(r.querySelector(".ep").value)||0,stock:r.querySelector(".es").value==="1"?99:0,c:r.querySelector(".ec").value})});return o}
+function edRows(){var h="";P.forEach(function(p,i){h+='<div class="er"><div class="g"><div><label>Plataforma</label><input class="en" value="'+esc(p.n)+'"></div><div><label>Duración</label><input class="ed" value="'+esc(p.dur||"1 Mes")+'"></div><div><label>Precio ($)</label><input class="ep" type="number" inputmode="decimal" value="'+p.price+'"></div><div><label>¿Disponible?</label><select class="es"><option value="1"'+(p.stock>0?' selected':'')+'>Sí</option><option value="0"'+(p.stock>0?'':' selected')+'>Agotado</option></select></div><div><label>Color</label><input class="ec" type="color" value="'+p.c+'"></div><div style="display:flex;align-items:flex-end"><button class="dl" onclick="delP('+i+')">🗑 Eliminar</button></div></div><div class="g" style="margin-top:6px"><div><label>🔥 Precio anterior (oferta)</label><input class="eo" type="number" inputmode="decimal" placeholder="vacío = sin oferta" value="'+(p.old||"")+'"></div><div><label>2 meses ($)</label><input class="e2" type="number" inputmode="decimal" placeholder="vacío = no se vende" value="'+(p.p2||"")+'"></div><div><label>3 meses ($)</label><input class="e3" type="number" inputmode="decimal" placeholder="vacío = no se vende" value="'+(p.p3||"")+'"></div><div><label>6 meses ($)</label><input class="e6" type="number" inputmode="decimal" placeholder="vacío = no se vende" value="'+(p.p6||"")+'"></div></div></div>'});return h}
+function readEd(){var L=document.querySelectorAll("#edb .er"),o=[];L.forEach(function(r){o.push({n:r.querySelector(".en").value.trim()||"Sin nombre",dur:r.querySelector(".ed").value.trim()||"1 Mes",price:parseFloat(r.querySelector(".ep").value)||0,stock:r.querySelector(".es").value==="1"?99:0,c:r.querySelector(".ec").value,old:parseFloat(r.querySelector(".eo").value)||0,p2:parseFloat(r.querySelector(".e2").value)||0,p3:parseFloat(r.querySelector(".e3").value)||0,p6:parseFloat(r.querySelector(".e6").value)||0})});return o}
 function paintEd(){document.getElementById("edb").innerHTML='<h2 style="margin:0 0 4px">Editar tienda</h2><label>Nombre de la tienda</label><input id="et" value="'+esc(D.title)+'"><label>Tu WhatsApp (con 52, sin +)</label><input id="ew" inputmode="numeric" value="'+esc(D.whatsapp)+'">'+payRows()+edRows()+'<button class="sec" onclick="addP()">➕ Agregar plataforma</button><button class="go" id="sv" onclick="saveEd()">Guardar cambios</button><button class="x" onclick="closeEd()">Cancelar</button><div id="em" style="color:var(--no);font-size:13px"></div>'}
 function openEd(){paintEd();document.getElementById("ed").style.display="flex"}
 function closeEd(){document.getElementById("ed").style.display="none"}
