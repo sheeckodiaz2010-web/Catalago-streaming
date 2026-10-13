@@ -58,6 +58,7 @@ small.n{display:block;color:var(--mu);text-align:center;padding:16px;font-size:1
 #cf{width:100%;padding:12px;border:1px dashed var(--ac);border-radius:12px;background:var(--bg);color:var(--tx);font-size:14px}
 .warn{background:var(--bg);border:1px solid var(--bd);border-radius:12px;padding:10px;font-size:13px;margin-top:10px}
 .q2{display:flex;align-items:center;gap:6px}.q2 button{background:var(--bg);color:var(--tx);border:1px solid var(--bd);border-radius:10px;width:36px;height:36px;font-size:18px}.q2 b{min-width:20px;text-align:center}
+.rvp body>*{display:none!important}.rvp #rcv,.rvp #rcv.hid{display:block!important}
 </style></head><body>
 <header><h1 id="ttl"></h1><p>Elige tu plataforma, agrega al carrito y pide por WhatsApp.</p><button id="adm" style="display:none" onclick="openEd()">⚙️ Editar tienda</button><button id="out">Salir</button></header>
 <div id="tabs"><button id="t1" class="tb on" onclick="tab(1)">🛒 Comprar</button><button id="t2" class="tb" onclick="tab(2)">🛠 Reportar problema</button></div>
@@ -81,6 +82,7 @@ small.n{display:block;color:var(--mu);text-align:center;padding:16px;font-size:1
 <div id="rcv" class="hid" style="position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:30;overflow:auto;padding:16px"><div id="rcvb" style="background:var(--card);border-radius:16px;padding:16px;max-width:480px;margin:0 auto"></div></div>
 <div id="ed"><div id="edb"></div></div>
 <script>
+if(location.hash.indexOf("#c=")===0)document.documentElement.className="rvp";
 var D=JSON.parse(document.getElementById("data").textContent),P=D.platforms;
 var cart={},qty={};
 function money(x){return "$"+x.toFixed(2)}
@@ -268,21 +270,23 @@ if(FB.apiKey&&FB.projectId){
   $("ttl").textContent=window.D.title;
   $("rp").innerHTML='<option value="">Elige...</option>'+window.P.map(function(p){return '<option>'+window.esc(p.n)+'</option>'}).join("");
   window.draw()},function(){});
- var admin=location.hash==="#admin"||location.hash.indexOf("#c=")===0;
+ var admin=location.hash==="#admin";
  function showLogin(v){$("lg").className=v?"":"hid"}
  onAuthStateChanged(auth,function(u){
-  if(u){window.FB_SAVE=function(data){return setDoc(ref,data)};$("adm").style.display="inline-block";$("out").style.display="inline-block";showLogin(false);if(location.hash.indexOf("#c=")===0)showReceipt(location.hash.slice(3))}
+  if(u){window.FB_SAVE=function(data){return setDoc(ref,data)};$("adm").style.display="inline-block";$("out").style.display="inline-block";showLogin(false)}
   else{window.FB_SAVE=null;$("adm").style.display="none";$("out").style.display="none";if(admin)showLogin(true)}});
  window.FB_ORDER=async function(o){o.t=serverTimestamp();var r=await addDoc(collection(db,"pedidos"),o);return r.id};
  async function showReceipt(id){
-  var b=$("rcvb");$("rcv").className="";b.innerHTML="Cargando comprobante...";
+  var b=$("rcvb");$("rcv").className="";$("rcv").style.background="#000";b.style.background="transparent";b.style.color="#fff";b.style.padding="0";b.innerHTML='<p style="text-align:center;font-family:Arial">Cargando comprobante...</p>';
   try{var sn=await getDoc(doc(db,"pedidos",id));
-   if(!sn.exists()){b.innerHTML="Este pedido no existe."}
-   else{var d=sn.data(),ok=String(d.img).indexOf("data:image/jpeg;base64,")===0;
-    b.innerHTML='<h3 style="margin:0 0 6px">Comprobante de pago</h3><div><b>'+window.esc(d.nombre)+'</b> — '+window.esc(d.total)+'</div><pre style="white-space:pre-wrap;font-family:inherit;font-size:14px">'+window.esc(d.items)+'</pre>'+(ok?'<img style="width:100%;border-radius:12px">':'')+'<button class="x" id="rcx">Cerrar</button>';
-    if(ok)b.querySelector("img").src=d.img;
-    $("rcx").onclick=function(){$("rcv").className="hid"}}}
-  catch(e){b.innerHTML="No se pudo abrir (revisa que hayas iniciado sesión con tu correo)."}}
+   if(!sn.exists()){b.innerHTML='<p style="text-align:center;font-family:Arial">Este comprobante no existe.</p>';return}
+   var d=sn.data();
+   if(String(d.img).indexOf("data:image/jpeg;base64,")!==0){b.innerHTML="";return}
+   b.innerHTML='<img style="width:100%;display:block;margin:0 auto;border-radius:8px"><p style="text-align:center;font-family:Arial;font-size:13px;color:#aaa;margin:10px 0"></p>';
+   b.querySelector("img").src=d.img;
+   b.querySelector("p").textContent=d.nombre+" · "+d.total}
+  catch(e){b.innerHTML='<p style="text-align:center;font-family:Arial">No se pudo abrir el comprobante.</p>'}}
+ if(location.hash.indexOf("#c=")===0)showReceipt(location.hash.slice(3));
  $("lb").onclick=async function(){
   $("lm").textContent="";
   try{await signInWithEmailAndPassword(auth,$("le").value.trim(),$("lp").value)}
