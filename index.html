@@ -139,12 +139,13 @@ async function sendOrder(){
  m+="Total pagado: "+money(total()[0])+"\nAdjunto mi comprobante.";
  if(window.FB_ORDER){
   try{
-   pm.style.color="var(--mu)";pm.textContent="Subiendo comprobante...";
+   pm.style.color="var(--mu)";pm.textContent="Preparando comprobante...";
    var img=await compress(f),it="";for(var k2 in cart)it+=cart[k2]+" x "+P[k2].n+"\n";
-   var id=await window.FB_ORDER({nombre:String(window.CN).slice(0,70),total:money(total()[0]),items:it,img:img});
+   pm.textContent="Subiendo comprobante...";
+   var id=await Promise.race([window.FB_ORDER({nombre:String(window.CN).slice(0,70),total:money(total()[0]),items:it,img:img}),new Promise(function(_,rj){setTimeout(function(){rj({code:"tiempo agotado"})},12000)})]);
    var link=location.href.split("#")[0]+"#c="+id;
    window.location.href="https://wa.me/"+D.whatsapp+"?text="+encodeURIComponent(m+"\nVer comprobante: "+link);return
-  }catch(e){pm.style.color="var(--no)";pm.textContent="No se pudo subir el comprobante, intentando otra forma..."}}
+  }catch(e){pm.style.color="var(--no)";pm.textContent="No se pudo subir ("+(e&&(e.code||e.message)||"error")+"). Usando otra forma..."}}
  if(navigator.canShare&&navigator.canShare({files:[f]})){
   try{await navigator.share({text:m,files:[f]});pm.style.color="var(--ok)";pm.textContent="Elige WhatsApp y mi chat para enviar tu pedido con el comprobante.";return}
   catch(e){if(e&&e.name==="AbortError")return}}
@@ -233,9 +234,9 @@ const FB={apiKey:"AIzaSyDLfprrwyup3qyB4oUnihDefr6MB0dDdLc",authDomain:"catalago-
 if(FB.apiKey&&FB.projectId){
  const V="10.12.2",B="https://www.gstatic.com/firebasejs/"+V+"/";
  const {initializeApp}=await import(B+"firebase-app.js");
- const {getFirestore,doc,onSnapshot,setDoc,addDoc,getDoc,collection,serverTimestamp}=await import(B+"firebase-firestore.js");
+ const {initializeFirestore,doc,onSnapshot,setDoc,addDoc,getDoc,collection,serverTimestamp}=await import(B+"firebase-firestore.js");
  const {getAuth,signInWithEmailAndPassword,signOut,onAuthStateChanged}=await import(B+"firebase-auth.js");
- const app=initializeApp(FB),db=getFirestore(app),auth=getAuth(app),ref=doc(db,"tienda","config");
+ const app=initializeApp(FB),db=initializeFirestore(app,{experimentalAutoDetectLongPolling:true}),auth=getAuth(app),ref=doc(db,"tienda","config");
  const $=function(i){return document.getElementById(i)};
  window.SHEET_URL="";
  onSnapshot(ref,function(sn){
