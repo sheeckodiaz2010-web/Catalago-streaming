@@ -152,29 +152,24 @@ function logoHtml(p,i){
  return '<div class="logo has" role="img" aria-label="'+esc(p.n)+'"><img src="'+esc(lg)+'" alt="'+esc(p.n)+'" onerror="logoErr('+i+')"></div>'+h}
 var LB={};
 function logoErr(i){if(LB[i])return;LB[i]=1;console.warn("Logo no cargó:",P[i]&&P[i].n);draw()}
-// --- Perfiles libres automáticos desde tu panel (hoja de Google) ---
-var URL_PANEL="https://script.google.com/macros/s/AKfycbwi9ZUUfqvSQhj4Oz_1fzGRlTCKwPBr_qfyF-UrCqZMCtATYtRwyYD6sh_U5KnVEPaR/exec",LIB=null;
-function libOf(p){if(!LIB)return null;var n=String(p.n).toLowerCase(),r=null;Object.keys(LIB).forEach(function(k){var kk=String(k).toLowerCase().trim();if(kk&&(n.indexOf(kk)>=0||kk.indexOf(n)>=0))r=Number(LIB[k])||0});return r}
-function lim(p){var l=libOf(p);return l==null?5:Math.min(5,Math.max(1,l))}
-function libSync(){fetch(URL_PANEL+"?accion=libres&t="+Date.now()).then(function(r){return r.json()}).then(function(j){if(j&&j.ok&&j.libres){LIB=j.libres;draw()}}).catch(function(){})}
 function draw(){
  var t=document.getElementById("q").value.toLowerCase(),h="";
  P.forEach(function(p,i){
   if(p.n.toLowerCase().indexOf(t)<0)return;
-  var lb=libOf(p),q=qty[i]||1,out=(lb!=null?lb<=0:p.stock<=0),pl=plansOf(p),m=sel[i]||1;if(pl.indexOf(m)<0)m=1;
+  var q=qty[i]||1,out=p.stock<=0,pl=plansOf(p),m=sel[i]||1;if(pl.indexOf(m)<0)m=1;
   var price=pr(p,m),off=p.old>p.price&&p.price>0,pct=off?Math.round((1-p.price/p.old)*100):0,sv=m>1?(m*p.price-price):0;
   h+='<div class="c'+(off?' ofer':'')+'">'+(off?'<div class="ofr">🔥 OFERTA -'+pct+'%</div>':'')+
   logoHtml(p,i)+
   (pl.length>1?'<div class="chips">'+pl.map(function(x){return '<button class="chip'+(x==m?' on':'')+'" onclick="setM('+i+','+x+')">'+mlabel(p,x)+'</button>'}).join("")+'</div>':'<span class="dur">'+mlabel(p,1)+'</span>')+
   '<div class="p">'+(off&&m==1?'<span class="old">'+money(p.old)+'</span>':'')+money(price)+'</div>'+(sv>0?'<div class="sv">Ahorras '+money(sv)+'</div>':'')+
-  '<div class="s '+(out?'no':'ok')+'">● '+(out?'Agotado':(lb!=null?lb+(lb==1?' disponible':' disponibles'):'Disponible'))+'</div>'+
+  '<div class="s '+(out?'no':'ok')+'">● '+(out?'Agotado':'Disponible')+'</div>'+
   (out?'':'<div class="q"><button onclick="ch('+i+',-1)">−</button><b>'+q+'</b><button onclick="ch('+i+',1)">+</button></div>')+
   '<button class="add" '+(out?'disabled':'')+' onclick="add('+i+')">🛒 Agregar</button></div>';
  });
  document.getElementById("grid").innerHTML=h||'<p style="grid-column:1/-1;color:var(--mu)">Sin resultados.</p>';
 }
-function ch(i,d){var v=(qty[i]||1)+d;qty[i]=Math.max(1,Math.min(lim(P[i]),v));draw()}
-function add(i){var m=sel[i]||1;if(plansOf(P[i]).indexOf(m)<0)m=1;var k=i+"_"+m;cart[k]=Math.min(lim(P[i]),(cart[k]||0)+(qty[i]||1));qty[i]=1;draw();bar()}
+function ch(i,d){var v=(qty[i]||1)+d;qty[i]=Math.max(1,Math.min(5,v));draw()}
+function add(i){var m=sel[i]||1;if(plansOf(P[i]).indexOf(m)<0)m=1;var k=i+"_"+m;cart[k]=Math.min(5,(cart[k]||0)+(qty[i]||1));qty[i]=1;draw();bar()}
 function total(){var t=0,n=0;cl().forEach(function(x){t+=x.q*x.pr;n+=x.q});return [t,n]}
 function bar(){var r=total(),b=document.getElementById("bar");b.style.display=r[1]?"flex":"none";
  document.getElementById("bn").textContent="🛒 Ver carrito ("+r[1]+")";document.getElementById("bt").textContent=money(r[0])}
@@ -388,7 +383,6 @@ async function sync(){
  }catch(e){}
  draw()}
 sync();
-libSync();setInterval(libSync,60000);
 </script><script type="module">
 // ===== PEGA AQUÍ TU CONFIG DE FIREBASE (Configuración del proyecto > Tus apps > Web) =====
 const FB={apiKey:"AIzaSyDLfprrwyup3qyB4oUnihDefr6MB0dDdLc",authDomain:"catalago-streaming.firebaseapp.com",projectId:"catalago-streaming",storageBucket:"catalago-streaming.firebasestorage.app",messagingSenderId:"732147386882",appId:"1:732147386882:web:939bf03d2f726cf9c7351b"};
