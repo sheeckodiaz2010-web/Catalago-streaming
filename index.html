@@ -114,7 +114,9 @@ h1{text-shadow:0 0 18px rgba(255,140,0,.35)}
 <meta name="apple-mobile-web-app-title" content="Streaming">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <style>#inst{position:fixed;top:calc(10px + env(safe-area-inset-top,0px));right:12px;z-index:9;display:none;background:linear-gradient(135deg,#6d4ee8,#8b5cf6);color:#fff;border:0;border-radius:999px;padding:9px 14px;font-size:13px;font-weight:bold;box-shadow:0 4px 14px rgba(0,0,0,.3)}</style>
+<style>#gear{position:fixed;top:calc(10px + env(safe-area-inset-top,0px));left:12px;z-index:9;width:38px;height:38px;border-radius:50%;border:1px solid var(--bd);background:var(--card);color:var(--tx);font-size:18px;line-height:1;opacity:.75;padding:0;display:flex;align-items:center;justify-content:center}</style>
 </head><body><div id="hwd"><div class="moon"></div><div class="w" style="left:0;top:0"><svg class="w" viewBox="0 0 100 100" fill="none" stroke="#cfc6ee" stroke-width=".8"><path d="M0 0L100 0M0 0L100 30M0 0L100 60M0 0L100 100M0 0L60 100M0 0L30 100M0 0L0 100"/><path d="M18 0Q14 12 0 18M38 0Q30 26 0 38M60 0Q48 46 0 60M82 0Q64 66 0 82"/></svg></div><div class="w" style="right:0;top:0;transform:scaleX(-1)"><svg class="w" viewBox="0 0 100 100" fill="none" stroke="#cfc6ee" stroke-width=".8"><path d="M0 0L100 0M0 0L100 30M0 0L100 60M0 0L100 100M0 0L60 100M0 0L30 100M0 0L0 100"/><path d="M18 0Q14 12 0 18M38 0Q30 26 0 38M60 0Q48 46 0 60M82 0Q64 66 0 82"/></svg></div><div class="w" style="right:0;bottom:0;transform:scale(-1,-1)"><svg class="w" viewBox="0 0 100 100" fill="none" stroke="#cfc6ee" stroke-width=".8"><path d="M0 0L100 0M0 0L100 30M0 0L100 60M0 0L100 100M0 0L60 100M0 0L30 100M0 0L0 100"/><path d="M18 0Q14 12 0 18M38 0Q30 26 0 38M60 0Q48 46 0 60M82 0Q64 66 0 82"/></svg></div><div class="e" style="left:6px;top:34%;animation-delay:-1s">💀</div><div class="e" style="right:10px;top:46%;animation-delay:-3s;font-size:38px">👻</div><div class="e" style="right:14px;top:30%;animation-delay:-2s;font-size:22px">🕷️</div><div class="e b" style="top:22%">🦇</div><div class="e b" style="top:58%;animation-delay:-7s">🦇</div><div class="e" style="left:-4px;bottom:90px;font-size:56px;animation:none">🎃</div><div class="e" style="left:42px;bottom:84px;font-size:44px;animation:none">🎃</div></div>
+<button id="gear" aria-label="Acceso administrador" onclick="showLogin(true)">⚙️</button>
 <header><h1 id="ttl"></h1><p>Elige tu plataforma, agrega al carrito y pide por WhatsApp.</p><button id="adm" style="display:none" onclick="openEd()">⚙️ Editar tienda</button><button id="rpb" style="display:none">📋 Reportes</button><button id="out">Salir</button></header>
 <div id="tabs"><button id="t1" class="tb on" onclick="tab(1)">🛒 Comprar</button><button id="t2" class="tb" onclick="tab(2)">🛠 Reportar problema</button></div>
 <div id="shop"><input id="q" placeholder="🔍 Buscar plataforma..." oninput="draw()">
@@ -414,10 +416,10 @@ if(FB.apiKey&&FB.projectId){
   $("rp").innerHTML='<option value="">Elige...</option>'+window.P.map(function(p){return '<option>'+window.esc(p.n)+'</option>'}).join("");
   window.draw()},function(){});
  var admin=location.hash==="#admin";
- function showLogin(v){$("lg").className=v?"":"hid"}
+ function showLogin(v){$("lg").className=v?"":"hid"}window.showLogin=showLogin;
  onAuthStateChanged(auth,function(u){
-  if(u){window.FB_SAVE=function(data){return setDoc(ref,data)};$("adm").style.display="inline-block";$("out").style.display="inline-block";$("rpb").style.display="inline-block";count();showLogin(false)}
-  else{window.FB_SAVE=null;$("adm").style.display="none";$("out").style.display="none";$("rpb").style.display="none";$("rpt").className="hid";if(admin)showLogin(true)}});
+  if(u){window.FB_SAVE=function(data){return setDoc(ref,data)};$("adm").style.display="inline-block";$("out").style.display="inline-block";$("rpb").style.display="inline-block";count();showLogin(false);$("gear").style.display="none"}
+  else{window.FB_SAVE=null;$("gear").style.display="flex";$("adm").style.display="none";$("out").style.display="none";$("rpb").style.display="none";$("rpt").className="hid";if(admin)showLogin(true)}});
  window.FB_ORDER=async function(o){o.t=serverTimestamp();var r=await addDoc(collection(db,"pedidos"),o);return r.id};
  async function showReceipt(id,col){
   var b=$("rcvb");$("rcv").className="";$("rcv").style.background="#000";b.style.background="transparent";b.style.color="#fff";b.style.padding="0";b.innerHTML='<p style="text-align:center;font-family:Arial">Cargando comprobante...</p>';
